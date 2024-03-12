@@ -1,7 +1,7 @@
 import '../styles/App.css';
 import React from 'react';
 const regexSpecialSign = /[\/x+-]/;
-const regexLastNumberWithSign = /[\+\-x\/]-?\d+(\.\d+)?$/g;
+const operationOrder = ["x", "/", "+", "-"];
 
 class App extends React.Component {
   constructor(props) {
@@ -20,32 +20,6 @@ class App extends React.Component {
     })
   }
 
-  /*clickNumber = (event) => {
-    this.setState((prevState) => {
-      const updateResult = prevState.result !== `0` && !regexSpecialSign.test(prevState.result.slice(-1)) 
-      ? `${prevState.result}${event.target.value}` 
-      : `${event.target.value}`;
-
-      let updateOperation = prevState.result !== `0` && !regexSpecialSign.test(prevState.result) 
-      ? `${prevState.operation}${event.target.value}` 
-      : prevState.result === `0` 
-        ? prevState.operation === '' 
-          ? `${event.target.value}`
-          : !prevState.result.includes('.')
-            ? `${prevState.operation}`
-            : `${prevState.operation}${event.target.value}`
-        : `${prevState.operation}${event.target.value}`;
-       
-        updateOperation = regexSpecialSign.test(prevState.operation.charAt(prevState.operation.length - 2)) && prevState.operation.slice(-1) === "0"
-        ? `${prevState.operation.slice(0, -1)}${event.target.value}`
-        : updateOperation;
-
-      return {
-        result: updateResult,
-        operation: updateOperation
-      }
-    });
-  }*/
 
   clickNumber = (event) => {
     this.setState((prevState) => {
@@ -53,12 +27,10 @@ class App extends React.Component {
       const isLastCharSpecial = regexSpecialSign.test(prevState.result.slice(-1));
       const isOperationLastCharZeroAfterSign = regexSpecialSign.test(prevState.operation.charAt(prevState.operation.length - 2)) && prevState.operation.slice(-1) === "0";
   
-      // Uproszczenie aktualizacji result
       const updateResult = prevState.result !== `0` && !isLastCharSpecial 
         ? prevState.result + valueToAdd 
         : valueToAdd;
-  
-      // Uproszczenie aktualizacji operation
+
       let updateOperation;
       if (isOperationLastCharZeroAfterSign) {
         updateOperation = prevState.operation.slice(0, -1) + valueToAdd;
@@ -79,7 +51,12 @@ class App extends React.Component {
 
   clickAction = (event) => {
     this.setState((prevState) => {
-      return regexSpecialSign.test(prevState.operation.slice(-1))
+      return prevState.operation.includes("=")
+      ? {
+        result: `0`,
+        operation: `${prevState.result}${event.target.value}`
+      }
+      : regexSpecialSign.test(prevState.operation.slice(-1))
       ? {
         result: `${event.target.value}`,
         operation: `${prevState.operation.slice(0,-1)}${event.target.value}`
@@ -119,7 +96,7 @@ class App extends React.Component {
     }); 
   }
 
-  clickSubstract = (event) => {
+  clickSubtract = (event) => {
     this.setState((prevState) => {
       const updateOperation = regexSpecialSign.test(prevState.operation.charAt(prevState.operation.length - 2)) 
       ? regexSpecialSign.test(prevState.operation.slice(-1))
@@ -134,18 +111,95 @@ class App extends React.Component {
     });
   }
 
-  equal = (event) => {
-    const equalSign = event.target.value;
+  equal = () => {
+    this.setState(prevState => {
+      
+      let updateOperation = "";
+      let updateResult = "";
+      let result = prevState.result;
+      const arrOperations = this.cutAllOperations(prevState.operation);
 
-    const arrOperations = this.cutAllOperations(this.state.operation);
 
-    console.log(arrOperations);
+      if(prevState.operation.includes("=")) {
+        updateResult = `0`;
+        updateOperation = `${result}`;
+      } else if(arrOperations.length >= 3 && !prevState.operation.includes("=")) {
+
+        result = this.calculateResult(arrOperations);
+        updateOperation = `${prevState.operation}=${result}`;
+        updateResult = `${result}`;
+      }
+
+      return {
+        result: updateResult,
+        operation: updateOperation
+      }
+    });
+  }
+
+  calculateResult = (arrOperations) => {
+    let arrForOperations = [...arrOperations];
+    let actualResult = 0;
+    console.log(`Operation: ${arrForOperations}`);
+
+    //const reverseOperation = [...operationOrder.reverse()];
+    //console.log(`Order Operations: ${reverseOperation}`);
+    do {
+      /*
+      let actualSign = operationOrder.find(op => arrForOperations.includes(op));
+
+      const indexOfSign = arrForOperations.indexOf(actualSign);
+      console.log(`Actual Sign = ${arrForOperations[indexOfSign]}`);
+      */  
+    
+      let actualSign = "";
+      let indexOfMultiply = arrForOperations.indexOf("x");
+      let indexOfDivide = arrForOperations.indexOf("/");
+      let indexOfAdd = arrForOperations.indexOf("+");
+      let indexOfSubtract = arrForOperations.indexOf("-");
+
+      if((arrForOperations.includes("x") !== -1) || (arrForOperations.includes("/") !== -1)) {
+          actualSign = indexOfMultiply !== -1 && indexOfMultiply < indexOfDivide
+            ? "x"
+            : "y";
+        } else {
+          //else if()
+          // Napisz tu logike !
+        }
+
+
+
+      console.log(`Actual Operation: ${arrForOperations[indexOfSign-1]}${arrForOperations[indexOfSign]}${arrForOperations[indexOfSign+1]}`)
+      switch(actualSign) {
+        case "x":
+          actualResult = +arrForOperations[indexOfSign-1] * +arrForOperations[indexOfSign+1];
+          break;
+        case "/":
+          actualResult = +arrForOperations[indexOfSign-1] / +arrForOperations[indexOfSign+1];
+          break;
+        case "+":
+          actualResult = +arrForOperations[indexOfSign-1] + +arrForOperations[indexOfSign+1];
+          break;
+        case "-":
+          actualResult = +arrForOperations[indexOfSign-1] - +arrForOperations[indexOfSign+1];
+          break;
+      }
+
+      arrForOperations.splice(indexOfSign-1, 3, `${actualResult}`);
+      console.log(`Operation: ${arrForOperations}`);
+    } while(arrForOperations.length >= 3);
+
+    console.log(`Result: ${arrForOperations}`);
+    return arrForOperations;
   }
 
   cutAllOperations = (operation) => {
     let arrOperations = [];
     let actualPosition = ``;
     let previousSign = ``;
+
+    if(regexSpecialSign.test(operation.slice(-1))) operation = operation.slice(0,-1);
+    if(regexSpecialSign.test(operation.slice(-1))) operation = operation.slice(0,-1);
 
     operation.split('').forEach((sign) => {
       if(regexSpecialSign.test(sign)) {
@@ -168,7 +222,7 @@ class App extends React.Component {
 
       previousSign = sign;
     });
-    if (actualPosition !== '' && !regexSpecialSign.test(actualPosition)) arrOperations.push(actualPosition);
+    if (actualPosition !== '' && !regexSpecialSign.test(actualPosition.slice(-1))) arrOperations.push(actualPosition);
 
     return arrOperations;
   }
@@ -189,7 +243,7 @@ class App extends React.Component {
         <button id="seven" value="7" onClick={this.clickNumber}>7</button>
         <button id="eight" value="8" onClick={this.clickNumber}>8</button>
         <button id="nine" value="9" onClick={this.clickNumber}>9</button>
-        <button id="substract" value="-" onClick={this.clickSubstract}>-</button>
+        <button id="subtract" value="-" onClick={this.clickSubtract}>-</button>
         {/* Fourth ROW */}
         <button id="four" value="4" onClick={this.clickNumber}>4</button>
         <button id="five" value="5" onClick={this.clickNumber}>5</button>
