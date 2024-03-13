@@ -52,23 +52,28 @@ class App extends React.Component {
     this.setState((prevState) => {
       return prevState.operation.includes("=")
       ? {
-        result: `0`,
-        operation: `${prevState.result}${event.target.value}`
+          result: `0`,
+          operation: `${prevState.result}${event.target.value}`
       }
-      : regexSpecialSign.test(prevState.operation.slice(-1))
-      ? {
-        result: `${event.target.value}`,
-        operation: `${prevState.operation.slice(0,-1)}${event.target.value}`
-      }
-      : !prevState.operation
+      : regexSpecialSign.test(prevState.operation.slice(-1)) && !regexSpecialSign.test(prevState.operation.charAt(prevState.operation.length -2))
         ? {
           result: `${event.target.value}`,
-          operation: `${event.target.value}`
+          operation: `${prevState.operation.slice(0,-1)}${event.target.value}`
         }
-        : {
-          result: `${event.target.value}`,
-          operation: `${prevState.operation}${event.target.value}`
-        }
+        : regexSpecialSign.test(prevState.operation.charAt(prevState.operation.length - 2)) && prevState.operation.slice(-1) === "-"
+          ? {
+            result: `${event.target.value}`,
+            operation: `${prevState.operation.slice(0,-2)}${event.target.value}`
+          }
+          : !prevState.operation
+            ? {
+              result: `${event.target.value}`,
+              operation: `${event.target.value}`
+            }
+            : {
+              result: `${event.target.value}`,
+              operation: `${prevState.operation}${event.target.value}`
+            }
     });
   }
 
