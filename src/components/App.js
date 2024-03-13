@@ -1,7 +1,6 @@
 import '../styles/App.css';
 import React from 'react';
 const regexSpecialSign = /[\/x+-]/;
-const operationOrder = ["x", "/", "+", "-"];
 
 class App extends React.Component {
   constructor(props) {
@@ -142,34 +141,30 @@ class App extends React.Component {
     let actualResult = 0;
     console.log(`Operation: ${arrForOperations}`);
 
-    //const reverseOperation = [...operationOrder.reverse()];
-    //console.log(`Order Operations: ${reverseOperation}`);
     do {
-      /*
-      let actualSign = operationOrder.find(op => arrForOperations.includes(op));
 
-      const indexOfSign = arrForOperations.indexOf(actualSign);
-      console.log(`Actual Sign = ${arrForOperations[indexOfSign]}`);
-      */  
-    
-      let actualSign = "";
       let indexOfMultiply = arrForOperations.indexOf("x");
       let indexOfDivide = arrForOperations.indexOf("/");
       let indexOfAdd = arrForOperations.indexOf("+");
       let indexOfSubtract = arrForOperations.indexOf("-");
 
-      if((arrForOperations.includes("x") !== -1) || (arrForOperations.includes("/") !== -1)) {
-          actualSign = indexOfMultiply !== -1 && indexOfMultiply < indexOfDivide
-            ? "x"
-            : "y";
-        } else {
-          //else if()
-          // Napisz tu logike !
-        }
+      console.log(`Indexes: 
+      (x : ${indexOfMultiply})
+      (/ : ${indexOfDivide})
+      (+ : ${indexOfAdd})
+      (- : ${indexOfSubtract})`);
 
+      let actualOperationsOrder = [];
+      if(indexOfSubtract !== -1) actualOperationsOrder.splice(0,0, indexOfSubtract);
+      if((indexOfAdd !== -1 && indexOfSubtract === -1) || (indexOfAdd !== -1 && indexOfAdd < indexOfSubtract)) actualOperationsOrder.splice(0,0, indexOfAdd)
+      if(indexOfMultiply !== -1) actualOperationsOrder.splice(0,0, indexOfMultiply)
+      if((indexOfDivide !== -1 && indexOfMultiply === -1) || (indexOfMultiply !== -1 && indexOfDivide < indexOfDivide)) {
+        actualOperationsOrder.splice(0,0, indexOfDivide)
+      }
 
+      const indexOfSign = actualOperationsOrder[0];
+      const actualSign = arrForOperations[indexOfSign];
 
-      console.log(`Actual Operation: ${arrForOperations[indexOfSign-1]}${arrForOperations[indexOfSign]}${arrForOperations[indexOfSign+1]}`)
       switch(actualSign) {
         case "x":
           actualResult = +arrForOperations[indexOfSign-1] * +arrForOperations[indexOfSign+1];
